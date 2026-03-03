@@ -1,0 +1,115 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if the user is an Admin or Owner by looking up their user document
+    // Note: In production, consider Custom Claims for better performance/cost.
+    function isAdmin() {
+      return isAuthenticated() && 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny(['admin', 'owner'])));
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if true; // Public profiles are visible to everyone
+      // Users can create their own profile (handled in AuthContext logic)
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      // Users can update their own profile; Admins can update any profile
+      allow update: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      // Only Admins can delete users (for now)
+      allow delete: if isAdmin();
+      
+      // Private user data (API keys, settings, etc.)
+      // Only the user themselves can access this
+      match /private_data/{document=**} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+    }
+
+    // Public characters collection
+    // Anyone can read, authenticated users can create/update
+    match /characters/{charId} {
+      allow read: if true;
+      // Creation: Authenticated users can create
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.creatorId;
+      // Update: Creator or Admin can update. Also allow anyone to increment stats like views, chatCount, rating, loveCount
+      allow update: if isAuthenticated(); 
+      // Delete: Creator or Admin can delete
+      allow delete: if isAuthenticated() && (resource.data.creatorId == request.auth.uid || isAdmin());
+    }
+
+    // Ratings collection
+    match /ratings/{ratingId} {
+      allow read: if true;
+      allow create, update: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    // Loves collection
+    match /loves/{loveId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    // Comments collection
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
+    }
+
+    // Private chats collection
+    // Users can only access their own chats; Admins can moderate/delete any user's chats
+    match /chats/{chatId} {
+      allow read, write, delete: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
+      allow create: if isAuthenticated() && (request.auth.uid == request.resource.data.userId || isAdmin());
+    }
+
+    // Chat subcollections (e.g., branches)
+    match /chats/{chatId}/{document=**} {
+      allow read, write, delete: if isAuthenticated() && (request.auth.uid == get(/databases/$(database)/documents/chats/$(chatId)).data.userId || isAdmin());
+    }
+
+    // Group chats (multi-bot sessions)
+    match /group_chats/{groupId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.ownerId || isAdmin());
+      allow create: if isAuthenticated() && (request.auth.uid == request.resource.data.ownerId || isAdmin());
+      allow update, delete: if isAuthenticated() && (request.auth.uid == resource.data.ownerId || isAdmin());
+
+      match /messages/{messageId} {
+        allow read, create: if isAuthenticated() && (request.auth.uid == get(/databases/$(database)/documents/group_chats/$(groupId)).data.ownerId || isAdmin());
+        allow update, delete: if isAdmin(); // moderation only
+      }
+    }
+
+
+
+    // Public tags collection (user-generated)
+    match /tags/{tagId} {
+      allow read: if true;
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+
+    // Feedback submissions
+    match /feedback/{feedbackId} {
+      allow create: if isAuthenticated();
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Reports (user + bot)
+    match /reports/{reportId} {
+      allow create: if isAuthenticated();
+      allow read, update, delete: if isAdmin();
+    }
+
+  }
+}

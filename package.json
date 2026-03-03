@@ -1,0 +1,32 @@
+{
+  "name": "open-higgsfield-ai",
+  "description": "AI Chat Interface with Gemini and CosmosRP",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.24",
+    "postcss": "^8.5.6",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@tailwindcss/vite": "^4.1.18",
+    "tailwindcss": "^4.1.18",
+    "@vitejs/plugin-react": "^5.1.4",
+    "vite": "^5.4.0"
+  },
+  "dependencies": {
+    "@lenml/char-card-reader": "^1.1.1",
+    "firebase": "^12.10.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.13.1"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
