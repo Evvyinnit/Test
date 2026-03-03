@@ -133,7 +133,7 @@ export default function Chat() {
   const [chatMemories, setChatMemories] = useState([]);
   const [longMemories, setLongMemories] = useState([]);
   const [promptLibrary, setPromptLibrary] = useState([]);
-  const \[editingIndex, setEditingIndex\] = useState\(null\);
+  const [editingIndex, setEditingIndex] = useState(null);
   const [botEditingIndex, setBotEditingIndex] = useState(null);
   const [botEditValue, setBotEditValue] = useState('');
 
