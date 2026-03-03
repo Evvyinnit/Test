@@ -30,7 +30,7 @@ export default function GroupChat() {
   const [showAuthorNote, setShowAuthorNote] = useState(false);
   const [pinnedMessages, setPinnedMessages] = useState([]);
   const [showPinned, setShowPinned] = useState(true);
-  const \[sending, setSending\] = useState\(false\);
+  const [sending, setSending] = useState(false);
 
   const [botEditingId, setBotEditingId] = useState(null);
   const [botEditValue, setBotEditValue] = useState('');
